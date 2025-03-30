@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Hello World WebSocket client</title>
+    <script>
+        var wsUrl = getRootUri() + "/ws/hello";
+        var websocket = null;
+        function getRootUri() {
+            return "ws://" +
+                (document.location.hostname == "" ? "localhost" : document.location.hostname)
+                + ":" +
+                (document.location.port == "" ? "5000" : document.location.port);
+        }
+        function init() {
+            output = document.getElementById("output");
+        }
+        function initWebSocket() {
+            websocket = new WebSocket(wsUrl);
+            websocket.onopen = function (evt) {
+                onOpen(evt);
+                doSend();
+            };
+            websocket.onmessage = function (evt) {
+                onMessage(evt);
+            };
+            websocket.onerror = function (evt) {
+                onError(evt);
+                websocket = null;
+            };
+            websocket.onclose = function (evt) {
+                onClose(evt);
+                websocket = null;
+            };
+        }
+        function send_message() {
+            if (websocket == null) {
+                initWebSocket();
+            } else {
+                doSend();
+            }
+        }
+        function onOpen(evt) {
+            writeToScreen("Connected to endpoint.");
+        }
+        function onMessage(evt) {
+            writeToScreen("Message received: " + evt.data);
+        }
+        6
+        function onError(evt) {
+            writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+        }
+        function onClose(evt) {
+            writeToScreen("Connection closed.");
+        }
+        function doSend() {
+            message = textID.value;
+            websocket.send(message);
+            writeToScreen("Message Sent: " + message);
+        }
+        function writeToScreen(message) {
+            var pre = document.createElement("p");
+            pre.style.wordWrap = "break-word";
+            pre.innerHTML = message;
+            output.appendChild(pre);
+        }
+        window.addEventListener("load", init, false);
+    </script>
+</head>
+<body>
+    <h1 style="text-align: center;">Hello World WebSocket client</h1>
+    <br />
+    <div style="text-align: center;">
+        <form action="">
+            <input onclick="send_message()" value="Send" type="button" />
+            <input id="textID" name="message" value="me" type="text" /><br />
+        </form>
+    </div>
+    <div id="output"></div>
+</body>
+</html>
