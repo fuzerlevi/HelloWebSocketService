@@ -4,7 +4,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HelloWebSocketService
+namespace WebSocket_E14KQR
 {
     public class WebSocketMiddleware
     {
@@ -24,7 +24,7 @@ namespace HelloWebSocketService
                     context.Response.StatusCode = StatusCodes.Status400BadRequest;
                     return;
                 }
-                if (context.Request.Path == "/ws/hello")
+                if (context.Request.Path == "/ws/E14KQR/cinema")
                 {
                     var socket = await context.WebSockets.AcceptWebSocketAsync();
                     await _server.Open(socket);

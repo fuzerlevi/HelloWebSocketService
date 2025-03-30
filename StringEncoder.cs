@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HelloWebSocketService
+namespace WebSocket_E14KQR
 {
     public class StringEncoder
     {

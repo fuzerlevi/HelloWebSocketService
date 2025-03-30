@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cinema Seat Reservation</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 20px auto;
+        }
+
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center;">Cinema Seat Reservation</h1>
+    <div style="text-align:center;">
+        <label>Rows: <input id="rows" type="number" value="5" min="1"></label>
+        <label>Columns: <input id="columns" type="number" value="8" min="1"></label>
+        <button onclick="initRoom()">Initialize Room</button>
+        <button onclick="getRoomSize()">Get Room Size</button>
+        <button onclick="updateSeats()">Update Seats</button>
+    </div>
+
+    <canvas id="seatCanvas" width="800" height="400"></canvas>
+
+    <script>const canvas = document.getElementById('seatCanvas');
+        const ctx = canvas.getContext('2d');
+        const seatSize = 40;
+        let rows = 0, columns = 0;
+        let lockId = null;
+        let seatMap = [];
+
+        const socket = new WebSocket(getWsUrl());
+
+        function getWsUrl() {
+            const host = location.hostname || 'localhost';
+            const port = location.port || '5000';
+            return `ws://${host}:${port}/ws/E14KQR/cinema`;
+        }
+
+        socket.onopen = () => console.log("WebSocket opened");
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            switch (data.type) {
+                case "roomSize":
+                    rows = data.rows;
+                    columns = data.columns;
+                    canvas.width = columns * seatSize;
+                    canvas.height = rows * seatSize;
+                    seatMap = Array.from({ length: rows }, () => Array(columns).fill('free'));
+                    updateSeats();
+                    break;
+                case "seatStatus":
+                    seatMap[data.row - 1][data.column - 1] = data.status;
+                    drawSeats();
+                    break;
+                case "lockResult":
+                    lockId = data.lockId;
+                    alert("Seat locked with ID: " + lockId);
+                    break;
+                case "error":
+                    alert("Error: " + data.message);
+                    break;
+            }
+        };
+
+        canvas.addEventListener("click", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / seatSize) + 1;
+            const row = Math.floor(y / seatSize) + 1;
+
+            if (seatMap[row - 1][col - 1] === 'free') {
+                socket.send(JSON.stringify({ type: "lockSeat", row, column: col }));
+            } else if (seatMap[row - 1][col - 1] === 'locked' && lockId !== null) {
+                socket.send(JSON.stringify({ type: "reserveSeat", lockId }));
+                lockId = null;
+            }
+        });
+
+        function initRoom() {
+            const r = parseInt(document.getElementById("rows").value);
+            const c = parseInt(document.getElementById("columns").value);
+            socket.send(JSON.stringify({ type: "initRoom", rows: r, columns: c }));
+        }
+
+        function getRoomSize() {
+            socket.send(JSON.stringify({ type: "getRoomSize" }));
+        }
+
+        function updateSeats() {
+            socket.send(JSON.stringify({ type: "updateSeats" }));
+        }
+
+        function drawSeats() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < columns; j++) {
+                    const status = seatMap[i][j];
+                    ctx.fillStyle = status === 'free' ? 'lightgreen' : status === 'locked' ? 'gold' : 'red';
+                    ctx.fillRect(j * seatSize, i * seatSize, seatSize - 2, seatSize - 2);
+                }
+            }
+        }</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 
-using HelloWebSocketService;
+using WebSocket_E14KQR;
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<HelloEndpoint>();
+builder.Services.AddSingleton<HelloEndpoint, CinemaEndpoint>();
 var app = builder.Build();
 app.UseStaticFiles();
 app.UseWebSockets();
